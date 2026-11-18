@@ -23,6 +23,7 @@ class _KosDetailPageState extends State<KosDetailPage> {
   KosModel? _kos;
   UserProfile? _profile;
   bool _loading = true;
+  int _selectedPhotoIndex = 0; // 0 = Tampak Luar, 1 = Tampak Dalam
 
   @override
   void initState() {
@@ -101,6 +102,10 @@ class _KosDetailPageState extends State<KosDetailPage> {
     final isAdmin = _profile?.isAdmin ?? false;
     final canModify = isMine || isAdmin;
 
+    final exteriorImg = _kos?.effectiveExteriorImage ?? '';
+    final interiorImg = _kos?.effectiveInteriorImage ?? '';
+    final currentImg = _selectedPhotoIndex == 0 ? exteriorImg : interiorImg;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Detail Kos'),
@@ -134,32 +139,147 @@ class _KosDetailPageState extends State<KosDetailPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // Banner Header Image Placeholder
-                      Container(
-                        height: 220,
-                        color: Colors.indigo.shade100,
-                        child: Stack(
-                          fit: StackFit.expand,
-                          children: [
-                            Icon(Icons.apartment_rounded, size: 100, color: Colors.indigo.shade300),
-                            Positioned(
-                              bottom: 12,
-                              left: 16,
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: Colors.black.withValues(alpha: 0.6),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Text(
-                                  'ID: ${_kos!.id}',
-                                  style: const TextStyle(color: Colors.white, fontSize: 12),
+                      // 1. Interactive Visual Photo Viewer (Tampak Luar & Tampak Dalam)
+                      Stack(
+                        children: [
+                          Container(
+                            height: 250,
+                            width: double.infinity,
+                            color: Colors.grey.shade900,
+                            child: Image.network(
+                              currentImg,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      _selectedPhotoIndex == 0 ? Icons.apartment : Icons.bed,
+                                      size: 64,
+                                      color: Colors.white54,
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      _selectedPhotoIndex == 0 ? 'Foto Tampak Luar' : 'Foto Tampak Dalam',
+                                      style: const TextStyle(color: Colors.white70),
+                                    ),
+                                  ],
                                 ),
                               ),
                             ),
-                          ],
-                        ),
+                          ),
+                          // Badge View Mode
+                          Positioned(
+                            top: 14,
+                            left: 14,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withValues(alpha: 0.7),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    _selectedPhotoIndex == 0 ? Icons.apartment : Icons.bedroom_parent,
+                                    size: 16,
+                                    color: Colors.amber,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    _selectedPhotoIndex == 0 ? 'FOTO TAMPAK LUAR' : 'FOTO TAMPAK DALAM',
+                                    style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          // Verification Badge
+                          if (_kos!.isVerified)
+                            Positioned(
+                              top: 14,
+                              right: 14,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                decoration: BoxDecoration(
+                                  color: Colors.green.shade700,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.verified, size: 14, color: Colors.white),
+                                    SizedBox(width: 4),
+                                    Text('TERVERIFIKASI', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          // Bottom Switcher Tabs for Tampak Luar / Tampak Dalam
+                          Positioned(
+                            bottom: 12,
+                            left: 16,
+                            right: 16,
+                            child: Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withValues(alpha: 0.65),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: InkWell(
+                                      onTap: () => setState(() => _selectedPhotoIndex = 0),
+                                      borderRadius: BorderRadius.circular(8),
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(vertical: 6),
+                                        decoration: BoxDecoration(
+                                          color: _selectedPhotoIndex == 0 ? Colors.indigo : Colors.transparent,
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                        child: const Row(
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: [
+                                            Icon(Icons.apartment, color: Colors.white, size: 16),
+                                            SizedBox(width: 6),
+                                            Text('Tampak Luar', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Expanded(
+                                    child: InkWell(
+                                      onTap: () => setState(() => _selectedPhotoIndex = 1),
+                                      borderRadius: BorderRadius.circular(8),
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(vertical: 6),
+                                        decoration: BoxDecoration(
+                                          color: _selectedPhotoIndex == 1 ? Colors.indigo : Colors.transparent,
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                        child: const Row(
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: [
+                                            Icon(Icons.bed, color: Colors.white, size: 16),
+                                            SizedBox(width: 6),
+                                            Text('Tampak Dalam', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
+
+                      // 2. Konten Rincian Kos
                       Padding(
                         padding: const EdgeInsets.all(16),
                         child: Column(
@@ -169,9 +289,19 @@ class _KosDetailPageState extends State<KosDetailPage> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Expanded(
-                                  child: Text(
-                                    _kos!.name,
-                                    style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        _kos!.name,
+                                        style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        'Dipasarkan oleh: ${_kos!.ownerName ?? "Pemilik"}',
+                                        style: TextStyle(fontSize: 12, color: Colors.indigo.shade800, fontWeight: FontWeight.w600),
+                                      ),
+                                    ],
                                   ),
                                 ),
                                 Container(
@@ -206,6 +336,76 @@ class _KosDetailPageState extends State<KosDetailPage> {
                               ],
                             ),
                             const Divider(height: 32),
+
+                            // Galeri Mini Foto
+                            const Text(
+                              'Galeri Foto Properti',
+                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                            ),
+                            const SizedBox(height: 8),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: GestureDetector(
+                                    onTap: () => setState(() => _selectedPhotoIndex = 0),
+                                    child: Container(
+                                      height: 80,
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(8),
+                                        border: Border.all(
+                                          color: _selectedPhotoIndex == 0 ? Colors.indigo : Colors.grey.shade300,
+                                          width: _selectedPhotoIndex == 0 ? 2.5 : 1,
+                                        ),
+                                      ),
+                                      clipBehavior: Clip.antiAlias,
+                                      child: Stack(
+                                        fit: StackFit.expand,
+                                        children: [
+                                          Image.network(exteriorImg, fit: BoxFit.cover, errorBuilder: (_, __, ___) => const Icon(Icons.apartment)),
+                                          Container(
+                                            alignment: Alignment.bottomCenter,
+                                            color: Colors.black38,
+                                            padding: const EdgeInsets.symmetric(vertical: 2),
+                                            child: const Text('Tampak Luar', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: GestureDetector(
+                                    onTap: () => setState(() => _selectedPhotoIndex = 1),
+                                    child: Container(
+                                      height: 80,
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(8),
+                                        border: Border.all(
+                                          color: _selectedPhotoIndex == 1 ? Colors.indigo : Colors.grey.shade300,
+                                          width: _selectedPhotoIndex == 1 ? 2.5 : 1,
+                                        ),
+                                      ),
+                                      clipBehavior: Clip.antiAlias,
+                                      child: Stack(
+                                        fit: StackFit.expand,
+                                        children: [
+                                          Image.network(interiorImg, fit: BoxFit.cover, errorBuilder: (_, __, ___) => const Icon(Icons.bed)),
+                                          Container(
+                                            alignment: Alignment.bottomCenter,
+                                            color: Colors.black38,
+                                            padding: const EdgeInsets.symmetric(vertical: 2),
+                                            child: const Text('Tampak Dalam', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const Divider(height: 32),
+
                             const Text(
                               'Fasilitas Tersedia',
                               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),

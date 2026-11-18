@@ -9,6 +9,8 @@ class KosModel {
   final DateTime createdAt;
   final String? ownerName;
   final String? imageUrl;
+  final String? exteriorImageUrl; // Foto tampak luar
+  final String? interiorImageUrl; // Foto tampak dalam
   final bool isVerified;
 
   const KosModel({
@@ -22,8 +24,19 @@ class KosModel {
     required this.createdAt,
     this.ownerName,
     this.imageUrl,
+    this.exteriorImageUrl,
+    this.interiorImageUrl,
     this.isVerified = false,
   });
+
+  String get effectiveExteriorImage =>
+      exteriorImageUrl ??
+      imageUrl ??
+      'https://images.unsplash.com/photo-1555854877-bab0e564b8d5?auto=format&fit=crop&w=800&q=80';
+
+  String get effectiveInteriorImage =>
+      interiorImageUrl ??
+      'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=800&q=80';
 
   factory KosModel.fromMap(Map<String, dynamic> map) {
     return KosModel(
@@ -41,6 +54,8 @@ class KosModel {
           : DateTime.now(),
       ownerName: map['owner_name']?.toString(),
       imageUrl: map['image_url']?.toString(),
+      exteriorImageUrl: map['exterior_image_url']?.toString() ?? map['image_url']?.toString(),
+      interiorImageUrl: map['interior_image_url']?.toString(),
       isVerified: map['is_verified'] == true || map['is_verified'] == 1 || map['is_verified'] == 'true',
     );
   }
@@ -55,6 +70,9 @@ class KosModel {
       'facilities': facilities,
       'description': description,
       'created_at': createdAt.toIso8601String(),
+      'image_url': exteriorImageUrl ?? imageUrl,
+      'exterior_image_url': exteriorImageUrl,
+      'interior_image_url': interiorImageUrl,
       'is_verified': isVerified,
     };
   }
@@ -70,6 +88,8 @@ class KosModel {
     DateTime? createdAt,
     String? ownerName,
     String? imageUrl,
+    String? exteriorImageUrl,
+    String? interiorImageUrl,
     bool? isVerified,
   }) {
     return KosModel(
@@ -83,6 +103,8 @@ class KosModel {
       createdAt: createdAt ?? this.createdAt,
       ownerName: ownerName ?? this.ownerName,
       imageUrl: imageUrl ?? this.imageUrl,
+      exteriorImageUrl: exteriorImageUrl ?? this.exteriorImageUrl,
+      interiorImageUrl: interiorImageUrl ?? this.interiorImageUrl,
       isVerified: isVerified ?? this.isVerified,
     );
   }

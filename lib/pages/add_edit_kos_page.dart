@@ -18,9 +18,49 @@ class _AddEditKosPageState extends State<AddEditKosPage> {
   final _priceC = TextEditingController();
   final _facilitiesC = TextEditingController();
   final _descC = TextEditingController();
+  final _exteriorUrlC = TextEditingController();
+  final _interiorUrlC = TextEditingController();
   bool _loading = false;
 
   bool get isEditing => widget.kosToEdit != null;
+
+  final List<Map<String, String>> _presetExteriorPhotos = [
+    {
+      'label': 'Gedung Modern',
+      'url': 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=800&q=80',
+    },
+    {
+      'label': 'Kos Minimalis',
+      'url': 'https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?auto=format&fit=crop&w=800&q=80',
+    },
+    {
+      'label': 'Kos Asri Bali',
+      'url': 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=800&q=80',
+    },
+    {
+      'label': 'Pondok Kampus',
+      'url': 'https://images.unsplash.com/photo-1580587771525-78b9dba3b914?auto=format&fit=crop&w=800&q=80',
+    },
+  ];
+
+  final List<Map<String, String>> _presetInteriorPhotos = [
+    {
+      'label': 'Kamar AC & Springbed',
+      'url': 'https://images.unsplash.com/photo-1598928506311-c55ded91a20c?auto=format&fit=crop&w=800&q=80',
+    },
+    {
+      'label': 'Kamar Tidur Bersih',
+      'url': 'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=800&q=80',
+    },
+    {
+      'label': 'Kamar & Meja Belajar',
+      'url': 'https://images.unsplash.com/photo-1595526114035-0d45ed16cfbf?auto=format&fit=crop&w=800&q=80',
+    },
+    {
+      'label': 'Kamar Kos Executive',
+      'url': 'https://images.unsplash.com/photo-1616594039964-ae9021a400a0?auto=format&fit=crop&w=800&q=80',
+    },
+  ];
 
   @override
   void initState() {
@@ -32,8 +72,12 @@ class _AddEditKosPageState extends State<AddEditKosPage> {
       _priceC.text = k.price.toString();
       _facilitiesC.text = k.facilities;
       _descC.text = k.description;
+      _exteriorUrlC.text = k.exteriorImageUrl ?? '';
+      _interiorUrlC.text = k.interiorImageUrl ?? '';
     } else {
       _facilitiesC.text = 'WiFi, Kamar Mandi Dalam, Kasur, Lemari';
+      _exteriorUrlC.text = _presetExteriorPhotos[0]['url']!;
+      _interiorUrlC.text = _presetInteriorPhotos[0]['url']!;
     }
   }
 
@@ -44,6 +88,8 @@ class _AddEditKosPageState extends State<AddEditKosPage> {
     _priceC.dispose();
     _facilitiesC.dispose();
     _descC.dispose();
+    _exteriorUrlC.dispose();
+    _interiorUrlC.dispose();
     super.dispose();
   }
 
@@ -56,6 +102,8 @@ class _AddEditKosPageState extends State<AddEditKosPage> {
     final price = int.tryParse(_priceC.text.trim()) ?? 0;
     final facilities = _facilitiesC.text.trim();
     final description = _descC.text.trim();
+    final extUrl = _exteriorUrlC.text.trim();
+    final intUrl = _interiorUrlC.text.trim();
 
     bool success = false;
     if (isEditing) {
@@ -65,6 +113,8 @@ class _AddEditKosPageState extends State<AddEditKosPage> {
         'price': price,
         'facilities': facilities,
         'description': description,
+        'exterior_image_url': extUrl.isEmpty ? null : extUrl,
+        'interior_image_url': intUrl.isEmpty ? null : intUrl,
       });
     } else {
       success = await KosService.instance.add(
@@ -73,6 +123,8 @@ class _AddEditKosPageState extends State<AddEditKosPage> {
         price: price,
         facilities: facilities,
         description: description,
+        exteriorImageUrl: extUrl.isEmpty ? null : extUrl,
+        interiorImageUrl: intUrl.isEmpty ? null : intUrl,
       );
     }
 
@@ -111,6 +163,128 @@ class _AddEditKosPageState extends State<AddEditKosPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                // 1. Bagian Foto Kos (Tampak Luar & Tampak Dalam)
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: Colors.indigo.shade50,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: Colors.indigo.shade200),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Icons.photo_library, color: Colors.indigo.shade800),
+                          const SizedBox(width: 8),
+                          const Text(
+                            'Foto Kos (Tampak Luar & Tampak Dalam)',
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      const Text(
+                        'Calon penyewa ingin melihat tampilan gedung tampak luar dan kenyamanan kamar tampak dalam.',
+                        style: TextStyle(fontSize: 12, color: Colors.black54),
+                      ),
+                      const SizedBox(height: 12),
+
+                      // Preview Foto Bersebelahan
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildPhotoPreview(
+                              title: 'Tampak Luar (Gedung)',
+                              url: _exteriorUrlC.text,
+                              icon: Icons.apartment,
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: _buildPhotoPreview(
+                              title: 'Tampak Dalam (Kamar)',
+                              url: _interiorUrlC.text,
+                              icon: Icons.bedroom_parent,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 14),
+
+                      // Input URL Tampak Luar
+                      TextFormField(
+                        controller: _exteriorUrlC,
+                        decoration: InputDecoration(
+                          labelText: 'URL Foto Tampak Luar (Eksterior)',
+                          hintText: 'https://...',
+                          prefixIcon: const Icon(Icons.photo_camera_back),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                          filled: true,
+                          fillColor: Colors.white,
+                        ),
+                        onChanged: (_) => setState(() {}),
+                      ),
+                      const SizedBox(height: 6),
+                      const Text('Pilih Cepat Foto Tampak Luar:', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
+                      const SizedBox(height: 4),
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: _presetExteriorPhotos.map((preset) {
+                            return Padding(
+                              padding: const EdgeInsets.only(right: 6),
+                              child: ActionChip(
+                                label: Text(preset['label']!, style: const TextStyle(fontSize: 11)),
+                                onPressed: () {
+                                  setState(() => _exteriorUrlC.text = preset['url']!);
+                                },
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                      const Divider(height: 20),
+
+                      // Input URL Tampak Dalam
+                      TextFormField(
+                        controller: _interiorUrlC,
+                        decoration: InputDecoration(
+                          labelText: 'URL Foto Tampak Dalam (Interior / Kamar)',
+                          hintText: 'https://...',
+                          prefixIcon: const Icon(Icons.bed),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                          filled: true,
+                          fillColor: Colors.white,
+                        ),
+                        onChanged: (_) => setState(() {}),
+                      ),
+                      const SizedBox(height: 6),
+                      const Text('Pilih Cepat Foto Tampak Dalam:', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
+                      const SizedBox(height: 4),
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: _presetInteriorPhotos.map((preset) {
+                            return Padding(
+                              padding: const EdgeInsets.only(right: 6),
+                              child: ActionChip(
+                                label: Text(preset['label']!, style: const TextStyle(fontSize: 11)),
+                                onPressed: () {
+                                  setState(() => _interiorUrlC.text = preset['url']!);
+                                },
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // 2. Informasi Properti
                 TextFormField(
                   controller: _nameC,
                   decoration: InputDecoration(
@@ -197,6 +371,47 @@ class _AddEditKosPageState extends State<AddEditKosPage> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildPhotoPreview({
+    required String title,
+    required String url,
+    required IconData icon,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(title, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 4),
+        Container(
+          height: 100,
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: Colors.grey.shade200,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: Colors.grey.shade400),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: url.isNotEmpty
+              ? Image.network(
+                  url,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(icon, color: Colors.grey),
+                        const Text('Gagal memuat', style: TextStyle(fontSize: 10, color: Colors.grey)),
+                      ],
+                    ),
+                  ),
+                )
+              : Center(
+                  child: Icon(icon, color: Colors.grey.shade400, size: 36),
+                ),
+        ),
+      ],
     );
   }
 }

@@ -442,13 +442,18 @@ class _HomePageState extends State<HomePage> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Container(
-                                width: 56,
-                                height: 56,
+                                width: 68,
+                                height: 68,
                                 decoration: BoxDecoration(
                                   color: Colors.indigo.shade50,
                                   borderRadius: BorderRadius.circular(12),
                                 ),
-                                child: Icon(Icons.apartment_rounded, color: Colors.indigo.shade700, size: 30),
+                                clipBehavior: Clip.antiAlias,
+                                child: Image.network(
+                                  kos.effectiveExteriorImage,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, __, ___) => Icon(Icons.apartment_rounded, color: Colors.indigo.shade700, size: 30),
+                                ),
                               ),
                               const SizedBox(width: 12),
                               Expanded(

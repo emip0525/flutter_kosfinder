@@ -226,13 +226,18 @@ class _SearchKosPageState extends State<SearchKosPage> {
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
                                         Container(
-                                          width: 50,
-                                          height: 50,
+                                          width: 64,
+                                          height: 64,
                                           decoration: BoxDecoration(
                                             color: Colors.indigo.shade50,
                                             borderRadius: BorderRadius.circular(10),
                                           ),
-                                          child: Icon(Icons.home_work, color: Colors.indigo.shade700),
+                                          clipBehavior: Clip.antiAlias,
+                                          child: Image.network(
+                                            kos.effectiveExteriorImage,
+                                            fit: BoxFit.cover,
+                                            errorBuilder: (_, __, ___) => Icon(Icons.home_work, color: Colors.indigo.shade700),
+                                          ),
                                         ),
                                         const SizedBox(width: 12),
                                         Expanded(

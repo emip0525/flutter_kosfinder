@@ -24,6 +24,8 @@ class KosService {
       description: 'Kos nyaman dan strategis khusus mahasiswa. 3 menit jalan kaki ke Kampus Tengah Undiksha. Lingkungan tenang, aman dengan CCTV 24 jam.',
       createdAt: DateTime.now().subtract(const Duration(days: 3)),
       ownerName: 'I Made Suartana (Owner A)',
+      exteriorImageUrl: 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=800&q=80',
+      interiorImageUrl: 'https://images.unsplash.com/photo-1598928506311-c55ded91a20c?auto=format&fit=crop&w=800&q=80',
       isVerified: true,
     ),
     KosModel(
@@ -36,6 +38,8 @@ class KosService {
       description: 'Kos bersih, sirkulasi udara baik, dekat pusat kuliner dan minimarket. Bebas jam malam sopan.',
       createdAt: DateTime.now().subtract(const Duration(days: 5)),
       ownerName: 'I Made Suartana (Owner A)',
+      exteriorImageUrl: 'https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?auto=format&fit=crop&w=800&q=80',
+      interiorImageUrl: 'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=800&q=80',
       isVerified: false,
     ),
     KosModel(
@@ -48,6 +52,8 @@ class KosService {
       description: 'Kos eksklusif bernuansa modern minimalis. Sangat cocok bagi mahasiswa tingkat akhir, dosen, maupun profesional muda.',
       createdAt: DateTime.now().subtract(const Duration(days: 7)),
       ownerName: 'Ni Ketut Ayu (Owner B)',
+      exteriorImageUrl: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=800&q=80',
+      interiorImageUrl: 'https://images.unsplash.com/photo-1616594039964-ae9021a400a0?auto=format&fit=crop&w=800&q=80',
       isVerified: true,
     ),
     KosModel(
@@ -60,6 +66,8 @@ class KosService {
       description: 'Pilihan hemat untuk mahasiswa baru. Lokasi dekat gerbang barat kampus, fasilitas lengkap dan bersih.',
       createdAt: DateTime.now().subtract(const Duration(days: 10)),
       ownerName: 'Ni Ketut Ayu (Owner B)',
+      exteriorImageUrl: 'https://images.unsplash.com/photo-1580587771525-78b9dba3b914?auto=format&fit=crop&w=800&q=80',
+      interiorImageUrl: 'https://images.unsplash.com/photo-1595526114035-0d45ed16cfbf?auto=format&fit=crop&w=800&q=80',
       isVerified: false,
     ),
   ];
@@ -149,12 +157,13 @@ class KosService {
     required int price,
     String facilities = 'WiFi, Kamar Mandi Dalam',
     String description = '',
+    String? exteriorImageUrl,
+    String? interiorImageUrl,
   }) async {
     final uid = _currentUid;
     final user = AuthService.instance.currentUser;
     final profile = await ProfileService.instance.getMyProfile();
 
-    // Validasi otorisasi di sisi aplikasi sebelum ke backend
     if (profile != null && profile.isSeeker) {
       debugPrint('[KosService.add] Ditolak: Seeker tidak memiliki izin menambah kos.');
       return false;
@@ -168,6 +177,8 @@ class KosService {
         'price': price,
         'facilities': facilities,
         'description': description,
+        'exterior_image_url': exteriorImageUrl,
+        'interior_image_url': interiorImageUrl,
       });
     } catch (e) {
       debugPrint('[KosService.add] Supabase error: $e');
@@ -184,6 +195,10 @@ class KosService {
       description: description,
       createdAt: DateTime.now(),
       ownerName: profile?.name ?? user?.email ?? 'Pemilik',
+      exteriorImageUrl: exteriorImageUrl ??
+          'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=800&q=80',
+      interiorImageUrl: interiorImageUrl ??
+          'https://images.unsplash.com/photo-1598928506311-c55ded91a20c?auto=format&fit=crop&w=800&q=80',
       isVerified: profile?.isAdmin ?? false,
     );
     _localKosList.insert(0, newKos);
@@ -211,12 +226,10 @@ class KosService {
 
     final target = _localKosList[index];
 
-    // Cek apakah user adalah pemilik asli atau admin
     final isOwnerOfKos = target.ownerId == uid;
     final isAdmin = profile?.isAdmin ?? false;
 
     if (!isOwnerOfKos && !isAdmin) {
-      // ACCESS DENIED OLEH ATURAN ROW LEVEL SECURITY
       debugPrint('[RLS DENIED] User $uid mencoba mengubah Kos milik ${target.ownerId}');
       return false;
     }
@@ -237,6 +250,8 @@ class KosService {
             : old.price,
         facilities: values['facilities']?.toString() ?? old.facilities,
         description: values['description']?.toString() ?? old.description,
+        exteriorImageUrl: values['exterior_image_url']?.toString() ?? old.exteriorImageUrl,
+        interiorImageUrl: values['interior_image_url']?.toString() ?? old.interiorImageUrl,
         isVerified: values['is_verified'] != null ? values['is_verified'] == true : old.isVerified,
       );
     }
@@ -266,7 +281,6 @@ class KosService {
       debugPrint('[KosService.delete] Supabase error: $e');
     }
 
-    // RLS Enforcement Simulator:
     final target = _localKosList.where((k) => k.id == id).firstOrNull;
     if (target == null) return false;
 
@@ -274,7 +288,6 @@ class KosService {
     final isAdmin = profile?.isAdmin ?? false;
 
     if (!isOwnerOfKos && !isAdmin) {
-      // ACCESS DENIED OLEH ATURAN ROW LEVEL SECURITY
       debugPrint('[RLS DENIED] User $uid mencoba menghapus Kos milik ${target.ownerId}');
       return false;
     }
