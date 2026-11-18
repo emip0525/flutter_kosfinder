@@ -15,8 +15,17 @@ class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
   final _emailC = TextEditingController();
   final _passC = TextEditingController();
+  String _selectedRole = 'seeker'; // 'seeker' | 'owner' | 'admin'
   bool _loading = false;
   bool _obscurePassword = true;
+
+  @override
+  void initState() {
+    super.initState();
+    // Default isi form sebagai Pencari Kos
+    _emailC.text = 'pencari@kosfinder.com';
+    _passC.text = 'seeker123';
+  }
 
   @override
   void dispose() {
@@ -36,7 +45,24 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  /// Login reguler dengan validasi kredensial (akun belum terdaftar DITOLAK)
+  /// Mengganti Role di sekitar email (Pencari Kos, Pemilik Kos, Admin)
+  void _selectRole(String role) {
+    setState(() {
+      _selectedRole = role;
+      if (role == 'admin') {
+        _emailC.text = 'admin@contoh.com';
+        _passC.text = 'admin123';
+      } else if (role == 'owner') {
+        _emailC.text = 'owner@contoh.com';
+        _passC.text = 'owner123';
+      } else {
+        _emailC.text = 'pencari@kosfinder.com';
+        _passC.text = 'seeker123';
+      }
+    });
+  }
+
+  /// Login dengan validasi kredensial
   Future<void> _login() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _loading = true);
@@ -64,31 +90,6 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-  /// Masuk Cepat langsung dengan Role Pilihan (Pencari Kos / Pemilik Kos / Admin)
-  Future<void> _loginDirectRole(String role, String label) async {
-    setState(() => _loading = true);
-    try {
-      await AuthService.instance.loginAsRole(role);
-      if (!mounted) return;
-      _showMessage('Berhasil masuk sebagai $label!', isError: false);
-      Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (_) => const HomePage()),
-        (route) => false,
-      );
-    } catch (e) {
-      if (!mounted) return;
-      _showMessage('Gagal masuk: $e', isError: true);
-    } finally {
-      if (mounted) setState(() => _loading = false);
-    }
-  }
-
-  void _fillAndLogin(String email, String pass) {
-    _emailC.text = email;
-    _passC.text = pass;
-    _login();
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -105,7 +106,7 @@ class _LoginPageState extends State<LoginPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Icon(Icons.home_work_rounded, size: 68, color: Theme.of(context).colorScheme.primary),
+                  Icon(Icons.home_work_rounded, size: 70, color: Theme.of(context).colorScheme.primary),
                   const SizedBox(height: 10),
                   const Text(
                     'KosFinder',
@@ -119,93 +120,102 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   const SizedBox(height: 24),
 
-                  // 1. KOTAK PILIHAN MASUK SEBAGAI ROLE (Pencari Kos, Pemilik Kos, Admin)
+                  // 1. TEMPAT PILIH / GANTI ROLE DI SEKITAR EMAIL
                   Container(
-                    padding: const EdgeInsets.all(14),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                     decoration: BoxDecoration(
                       color: Colors.indigo.shade50,
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(color: Colors.indigo.shade200),
                     ),
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.touch_app, size: 18, color: Colors.indigo),
-                            SizedBox(width: 6),
-                            Text(
-                              'Pilih Masuk Cepat Berdasarkan Role:',
-                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.indigo),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
                         Row(
                           children: [
-                            // Tombol Pencari Kos
-                            Expanded(
-                              child: ElevatedButton.icon(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.indigo,
-                                  foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(vertical: 10),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                                ),
-                                onPressed: _loading ? null : () => _loginDirectRole('seeker', 'Pencari Kos'),
-                                icon: const Icon(Icons.person_search, size: 18),
-                                label: const Text('Pencari Kos', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                              ),
-                            ),
+                            Icon(Icons.badge_outlined, size: 18, color: Colors.indigo.shade800),
                             const SizedBox(width: 8),
-                            // Tombol Pemilik Kos
-                            Expanded(
-                              child: ElevatedButton.icon(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.teal.shade700,
-                                  foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(vertical: 10),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                                ),
-                                onPressed: _loading ? null : () => _loginDirectRole('owner', 'Pemilik Kos'),
-                                icon: const Icon(Icons.home_work, size: 18),
-                                label: const Text('Pemilik Kos', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                            Text(
+                              'Pilih Peran / Role Akun:',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
+                                color: Colors.indigo.shade900,
                               ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 8),
-                        // Tombol Admin
-                        ElevatedButton.icon(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.deepPurple.shade700,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 10),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                          ),
-                          onPressed: _loading ? null : () => _loginDirectRole('admin', 'Admin KosFinder'),
-                          icon: const Icon(Icons.admin_panel_settings, size: 18),
-                          label: const Text('Masuk Sebagai Admin', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 10),
+                        Row(
+                          children: [
+                            // 1. Pencari Kos
+                            Expanded(
+                              child: ChoiceChip(
+                                avatar: Icon(
+                                  Icons.person_search,
+                                  size: 16,
+                                  color: _selectedRole == 'seeker' ? Colors.white : Colors.indigo,
+                                ),
+                                label: const Text('Pencari Kos', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                                selected: _selectedRole == 'seeker',
+                                selectedColor: Colors.indigo,
+                                labelStyle: TextStyle(
+                                  color: _selectedRole == 'seeker' ? Colors.white : Colors.black87,
+                                ),
+                                onSelected: (val) {
+                                  if (val) _selectRole('seeker');
+                                },
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            // 2. Pemilik Kos
+                            Expanded(
+                              child: ChoiceChip(
+                                avatar: Icon(
+                                  Icons.home_work,
+                                  size: 16,
+                                  color: _selectedRole == 'owner' ? Colors.white : Colors.teal.shade700,
+                                ),
+                                label: const Text('Pemilik Kos', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                                selected: _selectedRole == 'owner',
+                                selectedColor: Colors.teal.shade700,
+                                labelStyle: TextStyle(
+                                  color: _selectedRole == 'owner' ? Colors.white : Colors.black87,
+                                ),
+                                onSelected: (val) {
+                                  if (val) _selectRole('owner');
+                                },
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            // 3. Admin
+                            Expanded(
+                              child: ChoiceChip(
+                                avatar: Icon(
+                                  Icons.admin_panel_settings,
+                                  size: 16,
+                                  color: _selectedRole == 'admin' ? Colors.white : Colors.deepPurple,
+                                ),
+                                label: const Text('Admin', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                                selected: _selectedRole == 'admin',
+                                selectedColor: Colors.deepPurple.shade700,
+                                labelStyle: TextStyle(
+                                  color: _selectedRole == 'admin' ? Colors.white : Colors.black87,
+                                ),
+                                onSelected: (val) {
+                                  if (val) _selectRole('admin');
+                                },
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
                   ),
 
-                  const SizedBox(height: 20),
-                  const Row(
-                    children: [
-                      Expanded(child: Divider()),
-                      Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 10),
-                        child: Text('ATAU LOGIN MANUAL', style: TextStyle(fontSize: 11, color: Colors.grey, fontWeight: FontWeight.bold)),
-                      ),
-                      Expanded(child: Divider()),
-                    ],
-                  ),
                   const SizedBox(height: 16),
 
-                  // 2. FORM LOGIN DENGAN VALIDASI KETAT
+                  // 2. INPUT EMAIL
                   TextFormField(
                     controller: _emailC,
                     keyboardType: TextInputType.emailAddress,
@@ -222,6 +232,8 @@ class _LoginPageState extends State<LoginPage> {
                     },
                   ),
                   const SizedBox(height: 14),
+
+                  // 3. INPUT PASSWORD
                   TextFormField(
                     controller: _passC,
                     obscureText: _obscurePassword,
@@ -241,6 +253,8 @@ class _LoginPageState extends State<LoginPage> {
                     },
                   ),
                   const SizedBox(height: 20),
+
+                  // 4. TOMBOL LOGIN UTAMA
                   FilledButton(
                     onPressed: _loading ? null : _login,
                     style: FilledButton.styleFrom(
@@ -256,46 +270,13 @@ class _LoginPageState extends State<LoginPage> {
                         : const Text('Login', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                   ),
                   const SizedBox(height: 12),
+
+                  // 5. LINK KE REGISTER
                   TextButton(
                     onPressed: () => Navigator.of(context).push(
                       MaterialPageRoute(builder: (_) => const RegisterPage()),
                     ),
                     child: const Text('Belum punya akun? Register di sini', style: TextStyle(fontWeight: FontWeight.bold)),
-                  ),
-
-                  const SizedBox(height: 12),
-                  const Text(
-                    'Pintasan Isi Form Akun Terdaftar:',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 11, color: Colors.grey),
-                  ),
-                  const SizedBox(height: 6),
-                  Wrap(
-                    spacing: 6,
-                    runSpacing: 6,
-                    alignment: WrapAlignment.center,
-                    children: [
-                      ActionChip(
-                        avatar: const Icon(Icons.person, size: 14, color: Colors.indigo),
-                        label: const Text('Seeker Form', style: TextStyle(fontSize: 11)),
-                        onPressed: () => _fillAndLogin('pencari@kosfinder.com', 'seeker123'),
-                      ),
-                      ActionChip(
-                        avatar: const Icon(Icons.home_work, size: 14, color: Colors.teal),
-                        label: const Text('Owner A Form', style: TextStyle(fontSize: 11)),
-                        onPressed: () => _fillAndLogin('owner@contoh.com', 'owner123'),
-                      ),
-                      ActionChip(
-                        avatar: const Icon(Icons.domain, size: 14, color: Colors.orange),
-                        label: const Text('Owner B Form', style: TextStyle(fontSize: 11)),
-                        onPressed: () => _fillAndLogin('owner2@contoh.com', 'owner123'),
-                      ),
-                      ActionChip(
-                        avatar: const Icon(Icons.admin_panel_settings, size: 14, color: Colors.deepPurple),
-                        label: const Text('Admin Form', style: TextStyle(fontSize: 11)),
-                        onPressed: () => _fillAndLogin('admin@contoh.com', 'admin123'),
-                      ),
-                    ],
                   ),
                 ],
               ),
