@@ -104,6 +104,10 @@ class _AdminPanelPageState extends State<AdminPanelPage> {
         const SnackBar(content: Text('Kos berhasil dihapus oleh Admin.'), backgroundColor: Colors.green),
       );
       _loadAllData();
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Gagal menghapus: Akses ditolak oleh sistem keamanan.'), backgroundColor: Colors.red),
+      );
     }
   }
 

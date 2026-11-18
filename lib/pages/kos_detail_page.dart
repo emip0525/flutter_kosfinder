@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../models/kos_model.dart';
 import '../services/auth_service.dart';
 import '../services/kos_service.dart';
@@ -24,6 +25,103 @@ class _KosDetailPageState extends State<KosDetailPage> {
   UserProfile? _profile;
   bool _loading = true;
   int _selectedPhotoIndex = 0; // 0 = Tampak Luar, 1 = Tampak Dalam
+
+  Future<void> _openWhatsApp(String phone) async {
+    // Bersihkan nomor dari karakter non-digit
+    final cleanPhone = phone.replaceAll(RegExp(r'[^0-9]'), '');
+    final message = Uri.encodeComponent(
+      'Halo, saya tertarik dengan kos "${_kos?.name ?? 'kos Anda'}" yang saya lihat di KosFinder. Apakah masih tersedia?',
+    );
+    final waUrl = Uri.parse('https://wa.me/$cleanPhone?text=$message');
+    if (await canLaunchUrl(waUrl)) {
+      await launchUrl(waUrl, mode: LaunchMode.externalApplication);
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Tidak dapat membuka WhatsApp. Nomor: $cleanPhone'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Widget _buildContactSection() {
+    final phone = _kos?.ownerWhatsapp;
+    final hasWa = phone != null && phone.isNotEmpty;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // Info pemilik
+        Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: Colors.grey.shade100,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.grey.shade300),
+          ),
+          child: Row(
+            children: [
+              CircleAvatar(
+                backgroundColor: Colors.indigo.shade100,
+                child: Icon(Icons.person, color: Colors.indigo.shade700),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _kos?.ownerName ?? 'Pemilik Kos',
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                    ),
+                    if (hasWa)
+                      Text(
+                        'WA: +${phone!}',
+                        style: TextStyle(fontSize: 12, color: Colors.green.shade700),
+                      )
+                    else
+                      const Text(
+                        'Nomor WA belum ditambahkan',
+                        style: TextStyle(fontSize: 12, color: Colors.grey),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 10),
+        SizedBox(
+          width: double.infinity,
+          child: FilledButton.icon(
+            onPressed: hasWa ? () => _openWhatsApp(phone!) : null,
+            icon: const Icon(Icons.whatsapp),
+            label: Text(
+              hasWa ? 'Hubungi via WhatsApp' : 'WhatsApp Belum Tersedia',
+              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+            ),
+            style: FilledButton.styleFrom(
+              backgroundColor: hasWa ? const Color(0xFF25D366) : Colors.grey,
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+          ),
+        ),
+        if (!hasWa)
+          Padding(
+            padding: const EdgeInsets.only(top: 6),
+            child: Text(
+              'Pemilik belum menambahkan nomor WhatsApp. Hubungi melalui cara lain.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+            ),
+          ),
+      ],
+    );
+  }
 
   @override
   void initState() {
@@ -469,25 +567,8 @@ class _KosDetailPageState extends State<KosDetailPage> {
                               ),
                             ),
                             const SizedBox(height: 32),
-                            SizedBox(
-                              width: double.infinity,
-                              child: FilledButton.icon(
-                                onPressed: () {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text('Menghubungi pemilik ${_kos!.name}...'),
-                                      behavior: SnackBarBehavior.floating,
-                                    ),
-                                  );
-                                },
-                                icon: const Icon(Icons.chat),
-                                label: const Text('Hubungi Pemilik Kos'),
-                                style: FilledButton.styleFrom(
-                                  padding: const EdgeInsets.symmetric(vertical: 14),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                ),
-                              ),
-                            ),
+                            // Tombol Hubungi Pemilik via WhatsApp
+                            _buildContactSection(),
                           ],
                         ),
                       ),

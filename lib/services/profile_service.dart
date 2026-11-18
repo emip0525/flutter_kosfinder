@@ -49,7 +49,8 @@ class ProfileService {
           .from('profiles')
           .select()
           .eq('id', user.id)
-          .maybeSingle();
+          .maybeSingle()
+          .timeout(const Duration(milliseconds: 1000));
 
       if (data != null) {
         return UserProfile.fromMap(data);

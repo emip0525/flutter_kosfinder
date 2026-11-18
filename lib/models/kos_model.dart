@@ -8,6 +8,7 @@ class KosModel {
   final String description;
   final DateTime createdAt;
   final String? ownerName;
+  final String? ownerWhatsapp; // Nomor WhatsApp pemilik kos
   final String? imageUrl;
   final String? exteriorImageUrl; // Foto tampak luar
   final String? interiorImageUrl; // Foto tampak dalam
@@ -23,6 +24,7 @@ class KosModel {
     this.description = '',
     required this.createdAt,
     this.ownerName,
+    this.ownerWhatsapp,
     this.imageUrl,
     this.exteriorImageUrl,
     this.interiorImageUrl,
@@ -53,6 +55,7 @@ class KosModel {
           ? DateTime.tryParse(map['created_at'].toString()) ?? DateTime.now()
           : DateTime.now(),
       ownerName: map['owner_name']?.toString(),
+      ownerWhatsapp: map['owner_whatsapp']?.toString(),
       imageUrl: map['image_url']?.toString(),
       exteriorImageUrl: map['exterior_image_url']?.toString() ?? map['image_url']?.toString(),
       interiorImageUrl: map['interior_image_url']?.toString(),
@@ -70,6 +73,8 @@ class KosModel {
       'facilities': facilities,
       'description': description,
       'created_at': createdAt.toIso8601String(),
+      'owner_name': ownerName,
+      'owner_whatsapp': ownerWhatsapp,
       'image_url': exteriorImageUrl ?? imageUrl,
       'exterior_image_url': exteriorImageUrl,
       'interior_image_url': interiorImageUrl,
@@ -87,6 +92,7 @@ class KosModel {
     String? description,
     DateTime? createdAt,
     String? ownerName,
+    String? ownerWhatsapp,
     String? imageUrl,
     String? exteriorImageUrl,
     String? interiorImageUrl,
@@ -102,6 +108,7 @@ class KosModel {
       description: description ?? this.description,
       createdAt: createdAt ?? this.createdAt,
       ownerName: ownerName ?? this.ownerName,
+      ownerWhatsapp: ownerWhatsapp ?? this.ownerWhatsapp,
       imageUrl: imageUrl ?? this.imageUrl,
       exteriorImageUrl: exteriorImageUrl ?? this.exteriorImageUrl,
       interiorImageUrl: interiorImageUrl ?? this.interiorImageUrl,

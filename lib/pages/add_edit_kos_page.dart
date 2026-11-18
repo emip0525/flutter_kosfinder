@@ -20,6 +20,7 @@ class _AddEditKosPageState extends State<AddEditKosPage> {
   final _descC = TextEditingController();
   final _exteriorUrlC = TextEditingController();
   final _interiorUrlC = TextEditingController();
+  final _whatsappC = TextEditingController();
   bool _loading = false;
 
   bool get isEditing => widget.kosToEdit != null;
@@ -74,6 +75,7 @@ class _AddEditKosPageState extends State<AddEditKosPage> {
       _descC.text = k.description;
       _exteriorUrlC.text = k.exteriorImageUrl ?? '';
       _interiorUrlC.text = k.interiorImageUrl ?? '';
+      _whatsappC.text = k.ownerWhatsapp ?? '';
     } else {
       _facilitiesC.text = 'WiFi, Kamar Mandi Dalam, Kasur, Lemari';
       _exteriorUrlC.text = _presetExteriorPhotos[0]['url']!;
@@ -90,6 +92,7 @@ class _AddEditKosPageState extends State<AddEditKosPage> {
     _descC.dispose();
     _exteriorUrlC.dispose();
     _interiorUrlC.dispose();
+    _whatsappC.dispose();
     super.dispose();
   }
 
@@ -104,6 +107,7 @@ class _AddEditKosPageState extends State<AddEditKosPage> {
     final description = _descC.text.trim();
     final extUrl = _exteriorUrlC.text.trim();
     final intUrl = _interiorUrlC.text.trim();
+    final whatsapp = _whatsappC.text.trim().replaceAll(RegExp(r'\s|-|\+'), '');
 
     bool success = false;
     if (isEditing) {
@@ -115,6 +119,7 @@ class _AddEditKosPageState extends State<AddEditKosPage> {
         'description': description,
         'exterior_image_url': extUrl.isEmpty ? null : extUrl,
         'interior_image_url': intUrl.isEmpty ? null : intUrl,
+        'owner_whatsapp': whatsapp.isEmpty ? null : whatsapp,
       });
     } else {
       success = await KosService.instance.add(
@@ -125,6 +130,7 @@ class _AddEditKosPageState extends State<AddEditKosPage> {
         description: description,
         exteriorImageUrl: extUrl.isEmpty ? null : extUrl,
         interiorImageUrl: intUrl.isEmpty ? null : intUrl,
+        ownerWhatsapp: whatsapp.isEmpty ? null : whatsapp,
       );
     }
 
@@ -345,6 +351,62 @@ class _AddEditKosPageState extends State<AddEditKosPage> {
                     prefixIcon: const Icon(Icons.description_outlined),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                     alignLabelWithHint: true,
+                  ),
+                ),
+                const SizedBox(height: 14),
+
+                // 3. Nomor WhatsApp Pemilik
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: Colors.green.shade50,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.green.shade200),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Icons.whatsapp, color: Colors.green.shade700, size: 22),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Kontak WhatsApp Pemilik',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                              color: Colors.green.shade800,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      const Text(
+                        'Pencari kos akan menghubungi Anda via WhatsApp. Isi dengan nomor aktif.',
+                        style: TextStyle(fontSize: 12, color: Colors.black54),
+                      ),
+                      const SizedBox(height: 10),
+                      TextFormField(
+                        controller: _whatsappC,
+                        keyboardType: TextInputType.phone,
+                        decoration: InputDecoration(
+                          labelText: 'Nomor WhatsApp (tanpa tanda + atau spasi)',
+                          hintText: 'Contoh: 6281234567890',
+                          prefixIcon: Icon(Icons.phone_outlined, color: Colors.green.shade600),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                          filled: true,
+                          fillColor: Colors.white,
+                        ),
+                        validator: (v) {
+                          if (v == null || v.trim().isEmpty) return null; // Opsional
+                          final clean = v.trim().replaceAll(RegExp(r'\s|-|\+'), '');
+                          if (!RegExp(r'^[0-9]{10,15}$').hasMatch(clean)) {
+                            return 'Format tidak valid. Gunakan: 6281234567890';
+                          }
+                          return null;
+                        },
+                      ),
+                    ],
                   ),
                 ),
                 const SizedBox(height: 24),
