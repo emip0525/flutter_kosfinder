@@ -1,12 +1,12 @@
 -- =====================================================================
 -- WORKSHEET 9: Authentication, Authorization & Push Notifications
--- Database Schema & Row Level Security (RLS) Policies
--- Studi Kasus: KosFinder
+-- Database Schema, RLS Policies & Dummy Data
+-- Kasus: KosFinder (Pencari Kos, Pemilik Kos, Admin)
 -- Mahasiswa: Miftah Fadilatus Sakhila (2415051011) - PTI 5A
 -- =====================================================================
 
 -- ---------------------------------------------------------------------
--- 1. TABEL PROFILES (Role-Based Authorization)
+-- 1. TABEL PROFILES (Role-Based Authorization: Seeker, Owner, Admin)
 -- ---------------------------------------------------------------------
 create table if not exists public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
@@ -17,12 +17,18 @@ create table if not exists public.profiles (
 
 alter table public.profiles enable row level security;
 
--- Policy Profiles: Pengguna hanya boleh membaca profil miliknya sendiri
-create policy "profiles_select_own"
+-- Policy Profiles: Semua user yang login dapat membaca profile dasar
+create policy "profiles_select_all"
   on public.profiles for select to authenticated
-  using (auth.uid() = id);
+  using (true);
 
--- Function & Trigger: Otomatis membuat profile saat user mendaftar (auth.signUp)
+-- Policy Profiles: User hanya bisa mengubah profil miliknya sendiri
+create policy "profiles_update_own"
+  on public.profiles for update to authenticated
+  using (auth.uid() = id)
+  with check (auth.uid() = id);
+
+-- Function & Trigger: Otomatis mengisi profiles saat akun mendaftar (auth.signUp)
 create or replace function public.handle_new_user()
 returns trigger
 language plpgsql
@@ -33,13 +39,16 @@ begin
   values (
     new.id,
     new.email,
-    coalesce(new.raw_user_meta_data->>'name', ''),
+    coalesce(new.raw_user_meta_data->>'name', 'Pengguna KosFinder'),
     case
-      when new.raw_user_meta_data->>'role' in ('seeker', 'owner')
+      when new.raw_user_meta_data->>'role' in ('seeker', 'owner', 'admin')
         then new.raw_user_meta_data->>'role'
       else 'seeker'
     end
-  );
+  )
+  on conflict (id) do update set
+    name = excluded.name,
+    role = excluded.role;
   return new;
 end;
 $$;
@@ -49,7 +58,7 @@ create trigger on_auth_user_created
   after insert on auth.users
   for each row execute function public.handle_new_user();
 
--- Helper function: cek apakah user saat ini adalah admin
+-- Helper function: Memeriksa apakah user yang sedang login adalah Admin
 create or replace function public.is_admin()
 returns boolean
 language sql stable
@@ -62,7 +71,7 @@ as $$
 $$;
 
 -- ---------------------------------------------------------------------
--- 2. TABEL KOS (Data Ownership & Row Level Security)
+-- 2. TABEL KOS (Data Ownership, Foto Tampak Luar/Dalam & WhatsApp)
 -- ---------------------------------------------------------------------
 create table if not exists public.kos (
   id uuid primary key default gen_random_uuid(),
@@ -70,19 +79,23 @@ create table if not exists public.kos (
   name text not null,
   address text,
   price integer default 0,
-  facilities text default 'WiFi, Kamar Mandi Dalam',
+  facilities text default 'WiFi, Kamar Mandi Dalam, Kasur, Lemari',
   description text default '',
+  exterior_image_url text, -- Foto Tampak Luar (Gedung)
+  interior_image_url text, -- Foto Tampak Dalam (Kamar)
+  owner_whatsapp text,     -- Kontak WhatsApp Pemilik Kos
+  is_verified boolean not null default false,
   created_at timestamptz not null default now()
 );
 
 alter table public.kos enable row level security;
 
--- Policy 1: SELECT - Semua authenticated user dapat membaca katalog kos
+-- Policy 1: SELECT (Semua pengguna login dapat membaca dan mencari daftar kos)
 create policy "kos_select_authenticated"
   on public.kos for select to authenticated
   using (true);
 
--- Policy 2: INSERT - Hanya pengguna dengan role 'owner' atau 'admin' yang dapat menambah kos
+-- Policy 2: INSERT (Hanya Pemilik Kos atau Admin yang boleh menambah kos)
 create policy "kos_insert_owner"
   on public.kos for insert to authenticated
   with check (
@@ -93,25 +106,19 @@ create policy "kos_insert_owner"
     )
   );
 
--- Policy 3: UPDATE - Hanya pemilik kos (owner_id = auth.uid()) yang dapat mengubah kos miliknya
+-- Policy 3: UPDATE (Hanya pemilik kos atau admin yang boleh mengubah data)
 create policy "kos_update_own"
   on public.kos for update to authenticated
-  using (auth.uid() = owner_id)
-  with check (auth.uid() = owner_id);
+  using (auth.uid() = owner_id or public.is_admin())
+  with check (auth.uid() = owner_id or public.is_admin());
 
--- Policy 4: DELETE - Hanya pemilik kos yang dapat menghapus kos miliknya
+-- Policy 4: DELETE (Hanya pemilik kos atau admin yang boleh menghapus)
 create policy "kos_delete_own"
   on public.kos for delete to authenticated
-  using (auth.uid() = owner_id);
-
--- Policy 5: ADMIN ALL - Admin memiliki wewenang penuh atas seluruh baris kos
-create policy "kos_admin_all"
-  on public.kos for all to authenticated
-  using (public.is_admin())
-  with check (public.is_admin());
+  using (auth.uid() = owner_id or public.is_admin());
 
 -- ---------------------------------------------------------------------
--- 3. TABEL DEVICE_TOKENS (Push Notification Device Registration)
+-- 3. TABEL DEVICE_TOKENS (Push Notification FCM Device Registration)
 -- ---------------------------------------------------------------------
 create table if not exists public.device_tokens (
   token text primary key,
@@ -123,7 +130,7 @@ create table if not exists public.device_tokens (
 alter table public.device_tokens enable row level security;
 
 create policy "tokens_select_own" on public.device_tokens
-  for select to authenticated using (auth.uid() = user_id);
+  for select to authenticated using (auth.uid() = user_id or public.is_admin());
 
 create policy "tokens_insert_own" on public.device_tokens
   for insert to authenticated with check (auth.uid() = user_id);
@@ -134,3 +141,12 @@ create policy "tokens_update_own" on public.device_tokens
 
 create policy "tokens_delete_own" on public.device_tokens
   for delete to authenticated using (auth.uid() = user_id);
+
+-- ---------------------------------------------------------------------
+-- 4. CONTOH SEED DATA (Opsional: Properti Kos Awal)
+-- ---------------------------------------------------------------------
+-- Note: Jalankan setelah membuat user Owner di Authentication > Users
+-- insert into public.kos (name, address, price, facilities, description, exterior_image_url, interior_image_url, owner_whatsapp, is_verified)
+-- values
+-- ('Kos Graha Undiksha Asri', 'Jl. Udayana No. 11, Singaraja, Bali', 850000, 'WiFi Cepat, AC, Kamar Mandi Dalam', 'Kos nyaman khusus mahasiswa dekat kampus.', 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800', 'https://images.unsplash.com/photo-1598928506311-c55ded91a20c?w=800', '6281234567890', true),
+-- ('Kos Melati Harmoni', 'Jl. Ahmad Yani Gg. Remaja No. 4, Singaraja', 650000, 'WiFi, Kamar Mandi Dalam, Kasur', 'Kos bersih sirkulasi udara baik.', 'https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?w=800', 'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=800', '6281234567890', false);
