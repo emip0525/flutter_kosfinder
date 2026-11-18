@@ -79,7 +79,7 @@ class _KosDetailPageState extends State<KosDetailPage> {
                     ),
                     if (hasWa)
                       Text(
-                        'WA: +${phone!}',
+                        'WA: +$phone',
                         style: TextStyle(fontSize: 12, color: Colors.green.shade700),
                       )
                     else
@@ -97,8 +97,8 @@ class _KosDetailPageState extends State<KosDetailPage> {
         SizedBox(
           width: double.infinity,
           child: FilledButton.icon(
-            onPressed: hasWa ? () => _openWhatsApp(phone!) : null,
-            icon: const Icon(Icons.whatsapp),
+            onPressed: hasWa ? () => _openWhatsApp(phone) : null,
+            icon: const Icon(Icons.chat_bubble),
             label: Text(
               hasWa ? 'Hubungi via WhatsApp' : 'WhatsApp Belum Tersedia',
               style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
@@ -247,7 +247,7 @@ class _KosDetailPageState extends State<KosDetailPage> {
                             child: Image.network(
                               currentImg,
                               fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => Center(
+                              errorBuilder: (context, error, stackTrace) => Center(
                                 child: Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
@@ -459,7 +459,7 @@ class _KosDetailPageState extends State<KosDetailPage> {
                                       child: Stack(
                                         fit: StackFit.expand,
                                         children: [
-                                          Image.network(exteriorImg, fit: BoxFit.cover, errorBuilder: (_, __, ___) => const Icon(Icons.apartment)),
+                                          Image.network(exteriorImg, fit: BoxFit.cover, errorBuilder: (context, error, stackTrace) => const Icon(Icons.apartment)),
                                           Container(
                                             alignment: Alignment.bottomCenter,
                                             color: Colors.black38,
@@ -488,7 +488,7 @@ class _KosDetailPageState extends State<KosDetailPage> {
                                       child: Stack(
                                         fit: StackFit.expand,
                                         children: [
-                                          Image.network(interiorImg, fit: BoxFit.cover, errorBuilder: (_, __, ___) => const Icon(Icons.bed)),
+                                          Image.network(interiorImg, fit: BoxFit.cover, errorBuilder: (context, error, stackTrace) => const Icon(Icons.bed)),
                                           Container(
                                             alignment: Alignment.bottomCenter,
                                             color: Colors.black38,

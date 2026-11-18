@@ -368,7 +368,7 @@ class _AddEditKosPageState extends State<AddEditKosPage> {
                     children: [
                       Row(
                         children: [
-                          Icon(Icons.whatsapp, color: Colors.green.shade700, size: 22),
+                          Icon(Icons.chat_bubble, color: Colors.green.shade700, size: 22),
                           const SizedBox(width: 8),
                           Text(
                             'Kontak WhatsApp Pemilik',
@@ -459,7 +459,7 @@ class _AddEditKosPageState extends State<AddEditKosPage> {
               ? Image.network(
                   url,
                   fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => Center(
+                  errorBuilder: (context, error, stackTrace) => Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
