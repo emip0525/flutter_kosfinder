@@ -24,6 +24,7 @@ class KosService {
       description: 'Kos nyaman dan strategis khusus mahasiswa. 3 menit jalan kaki ke Kampus Tengah Undiksha. Lingkungan tenang, aman dengan CCTV 24 jam.',
       createdAt: DateTime.now().subtract(const Duration(days: 3)),
       ownerName: 'I Made Suartana (Owner A)',
+      isVerified: true,
     ),
     KosModel(
       id: 'kos-002',
@@ -35,6 +36,7 @@ class KosService {
       description: 'Kos bersih, sirkulasi udara baik, dekat pusat kuliner dan minimarket. Bebas jam malam sopan.',
       createdAt: DateTime.now().subtract(const Duration(days: 5)),
       ownerName: 'I Made Suartana (Owner A)',
+      isVerified: false,
     ),
     KosModel(
       id: 'kos-003',
@@ -46,6 +48,7 @@ class KosService {
       description: 'Kos eksklusif bernuansa modern minimalis. Sangat cocok bagi mahasiswa tingkat akhir, dosen, maupun profesional muda.',
       createdAt: DateTime.now().subtract(const Duration(days: 7)),
       ownerName: 'Ni Ketut Ayu (Owner B)',
+      isVerified: true,
     ),
     KosModel(
       id: 'kos-004',
@@ -57,6 +60,7 @@ class KosService {
       description: 'Pilihan hemat untuk mahasiswa baru. Lokasi dekat gerbang barat kampus, fasilitas lengkap dan bersih.',
       createdAt: DateTime.now().subtract(const Duration(days: 10)),
       ownerName: 'Ni Ketut Ayu (Owner B)',
+      isVerified: false,
     ),
   ];
 
@@ -180,6 +184,7 @@ class KosService {
       description: description,
       createdAt: DateTime.now(),
       ownerName: profile?.name ?? user?.email ?? 'Pemilik',
+      isVerified: profile?.isAdmin ?? false,
     );
     _localKosList.insert(0, newKos);
     return true;
@@ -232,8 +237,18 @@ class KosService {
             : old.price,
         facilities: values['facilities']?.toString() ?? old.facilities,
         description: values['description']?.toString() ?? old.description,
+        isVerified: values['is_verified'] != null ? values['is_verified'] == true : old.isVerified,
       );
     }
+  }
+
+  /// Fitur Admin: Verifikasi Kos
+  Future<bool> toggleVerification(String id) async {
+    final index = _localKosList.indexWhere((k) => k.id == id);
+    if (index == -1) return false;
+    final target = _localKosList[index];
+    final newStatus = !target.isVerified;
+    return update(id, {'is_verified': newStatus});
   }
 
   /// Menghapus kos (Hanya pemilik kos atau admin - Dilindungi RLS)

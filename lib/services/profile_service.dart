@@ -55,22 +55,25 @@ class ProfileService {
         return UserProfile.fromMap(data);
       }
     } catch (e) {
-      debugPrint('[ProfileService.getMyProfile] Supabase query failed: $e');
+      debugPrint('[ProfileService.getMyProfile] Supabase query offline/fallback: $e');
     }
 
     // Fallback from auth metadata if profiles table is empty or offline
     final meta = user.userMetadata ?? {};
+    final email = user.email ?? '';
     final role = meta['role']?.toString() ??
-        (user.email?.contains('owner') == true
-            ? 'owner'
-            : (user.email?.contains('admin') == true ? 'admin' : 'seeker'));
+        (email.contains('admin')
+            ? 'admin'
+            : (email.contains('owner') ? 'owner' : 'seeker'));
     final name = meta['name']?.toString() ??
-        (user.email != null ? user.email!.split('@').first : 'Pengguna KosFinder');
+        (email.contains('admin')
+            ? 'Administrator KosFinder'
+            : (email.contains('owner') ? 'Pemilik Kos' : 'Pencari Kos'));
 
     return UserProfile(
       id: user.id,
-      email: user.email ?? 'user@kosfinder.local',
-      name: name.isEmpty ? (user.email ?? 'Pengguna') : name,
+      email: email.isEmpty ? 'user@kosfinder.local' : email,
+      name: name,
       role: role,
     );
   }

@@ -9,6 +9,7 @@ class KosModel {
   final DateTime createdAt;
   final String? ownerName;
   final String? imageUrl;
+  final bool isVerified;
 
   const KosModel({
     required this.id,
@@ -21,6 +22,7 @@ class KosModel {
     required this.createdAt,
     this.ownerName,
     this.imageUrl,
+    this.isVerified = false,
   });
 
   factory KosModel.fromMap(Map<String, dynamic> map) {
@@ -39,6 +41,7 @@ class KosModel {
           : DateTime.now(),
       ownerName: map['owner_name']?.toString(),
       imageUrl: map['image_url']?.toString(),
+      isVerified: map['is_verified'] == true || map['is_verified'] == 1 || map['is_verified'] == 'true',
     );
   }
 
@@ -52,6 +55,7 @@ class KosModel {
       'facilities': facilities,
       'description': description,
       'created_at': createdAt.toIso8601String(),
+      'is_verified': isVerified,
     };
   }
 
@@ -66,6 +70,7 @@ class KosModel {
     DateTime? createdAt,
     String? ownerName,
     String? imageUrl,
+    bool? isVerified,
   }) {
     return KosModel(
       id: id ?? this.id,
@@ -78,6 +83,7 @@ class KosModel {
       createdAt: createdAt ?? this.createdAt,
       ownerName: ownerName ?? this.ownerName,
       imageUrl: imageUrl ?? this.imageUrl,
+      isVerified: isVerified ?? this.isVerified,
     );
   }
 }

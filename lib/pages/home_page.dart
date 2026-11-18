@@ -7,6 +7,7 @@ import '../services/notification_service.dart';
 import '../services/profile_service.dart';
 import '../widgets/role_guard.dart';
 import 'add_edit_kos_page.dart';
+import 'admin_panel_page.dart';
 import 'kos_detail_page.dart';
 import 'login_page.dart';
 import 'search_kos_page.dart';
@@ -143,6 +144,7 @@ class _HomePageState extends State<HomePage> {
     final role = _profile?.role ?? 'seeker';
     final myId = AuthService.instance.currentUser?.id;
     final isOwnerOrAdmin = role == 'owner' || role == 'admin';
+    final isAdmin = role == 'admin';
 
     return Scaffold(
       appBar: AppBar(
@@ -155,7 +157,7 @@ class _HomePageState extends State<HomePage> {
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
-                color: role == 'admin'
+                color: isAdmin
                     ? Colors.purple
                     : (role == 'owner' ? Colors.teal : Colors.indigo),
               ),
@@ -172,6 +174,17 @@ class _HomePageState extends State<HomePage> {
               );
             },
           ),
+          if (isAdmin)
+            IconButton(
+              icon: const Icon(Icons.admin_panel_settings, color: Colors.purple),
+              tooltip: 'Buka Panel Admin & Notifikasi Siaran',
+              onPressed: () async {
+                await Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const AdminPanelPage()),
+                );
+                _loadData();
+              },
+            ),
           IconButton(
             icon: const Icon(Icons.notifications_active),
             tooltip: 'Kirim Test Push Notification',
@@ -201,15 +214,15 @@ class _HomePageState extends State<HomePage> {
                       children: [
                         CircleAvatar(
                           radius: 28,
-                          backgroundColor: role == 'admin'
+                          backgroundColor: isAdmin
                               ? Colors.purple.shade100
                               : (role == 'owner' ? Colors.teal.shade100 : Colors.indigo.shade100),
                           child: Icon(
-                            role == 'admin'
+                            isAdmin
                                 ? Icons.admin_panel_settings
                                 : (role == 'owner' ? Icons.home_work : Icons.person_search),
                             size: 32,
-                            color: role == 'admin'
+                            color: isAdmin
                                 ? Colors.purple.shade800
                                 : (role == 'owner' ? Colors.teal.shade800 : Colors.indigo.shade800),
                           ),
@@ -232,12 +245,12 @@ class _HomePageState extends State<HomePage> {
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                                 decoration: BoxDecoration(
-                                  color: role == 'admin'
+                                  color: isAdmin
                                       ? Colors.purple.shade50
                                       : (role == 'owner' ? Colors.teal.shade50 : Colors.indigo.shade50),
                                   borderRadius: BorderRadius.circular(6),
                                   border: Border.all(
-                                    color: role == 'admin'
+                                    color: isAdmin
                                         ? Colors.purple.shade300
                                         : (role == 'owner' ? Colors.teal.shade300 : Colors.indigo.shade300),
                                   ),
@@ -247,7 +260,7 @@ class _HomePageState extends State<HomePage> {
                                   style: TextStyle(
                                     fontSize: 11,
                                     fontWeight: FontWeight.bold,
-                                    color: role == 'admin'
+                                    color: isAdmin
                                         ? Colors.purple.shade800
                                         : (role == 'owner' ? Colors.teal.shade800 : Colors.indigo.shade800),
                                   ),
@@ -259,28 +272,38 @@ class _HomePageState extends State<HomePage> {
                       ],
                     ),
                     const Divider(height: 20),
-                    // Shortcut Akses Cepat & Security Test
-                    Row(
+                    // Shortcut Akses Cepat & Security Test & Admin Panel
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
                       children: [
-                        Expanded(
-                          child: OutlinedButton.icon(
-                            onPressed: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(builder: (_) => const SecurityTestPage()),
-                              );
-                            },
-                            icon: const Icon(Icons.shield_outlined, size: 16),
-                            label: const Text('Security Test RLS', style: TextStyle(fontSize: 12)),
-                          ),
+                        OutlinedButton.icon(
+                          onPressed: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(builder: (_) => const SecurityTestPage()),
+                            );
+                          },
+                          icon: const Icon(Icons.shield_outlined, size: 16),
+                          label: const Text('Security Test RLS', style: TextStyle(fontSize: 12)),
                         ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: OutlinedButton.icon(
+                        if (isAdmin)
+                          FilledButton.icon(
+                            style: FilledButton.styleFrom(backgroundColor: Colors.purple.shade700),
+                            onPressed: () async {
+                              await Navigator.of(context).push(
+                                MaterialPageRoute(builder: (_) => const AdminPanelPage()),
+                              );
+                              _loadData();
+                            },
+                            icon: const Icon(Icons.admin_panel_settings, size: 16),
+                            label: const Text('Kelola Data & Notifikasi', style: TextStyle(fontSize: 12)),
+                          )
+                        else
+                          OutlinedButton.icon(
                             onPressed: _testPushNotification,
                             icon: const Icon(Icons.send_rounded, size: 16),
                             label: const Text('Test Notif FCM', style: TextStyle(fontSize: 12)),
                           ),
-                        ),
                       ],
                     ),
                   ],
@@ -395,7 +418,6 @@ class _HomePageState extends State<HomePage> {
             else
               ..._kosList.map((kos) {
                 final isMine = kos.ownerId == myId;
-                final isAdmin = role == 'admin';
                 final canModify = isMine || isAdmin;
 
                 return Card(
@@ -433,9 +455,32 @@ class _HomePageState extends State<HomePage> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(
-                                      kos.name,
-                                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: Text(
+                                            kos.name,
+                                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                                          ),
+                                        ),
+                                        if (kos.isVerified)
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                            decoration: BoxDecoration(
+                                              color: Colors.green.shade50,
+                                              borderRadius: BorderRadius.circular(4),
+                                              border: Border.all(color: Colors.green),
+                                            ),
+                                            child: const Text(
+                                              'VERIFIED ✓',
+                                              style: TextStyle(
+                                                fontSize: 9,
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.green,
+                                              ),
+                                            ),
+                                          ),
+                                      ],
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
@@ -476,7 +521,7 @@ class _HomePageState extends State<HomePage> {
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                   decoration: BoxDecoration(
-                                    color: Colors.green.shade50,
+                                    color: isAdmin && !isMine ? Colors.purple.shade50 : Colors.green.shade50,
                                     borderRadius: BorderRadius.circular(4),
                                   ),
                                   child: Text(
@@ -484,7 +529,7 @@ class _HomePageState extends State<HomePage> {
                                     style: TextStyle(
                                       fontSize: 10,
                                       fontWeight: FontWeight.bold,
-                                      color: Colors.green.shade800,
+                                      color: isAdmin && !isMine ? Colors.purple.shade800 : Colors.green.shade800,
                                     ),
                                   ),
                                 ),
