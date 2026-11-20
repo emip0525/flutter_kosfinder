@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -25,13 +26,20 @@ class DraftRepository {
 
   Future<String> savePermanentPhoto(XFile selected) async {
     final ext = selected.name.split('.').last.toLowerCase();
-    if (!{'jpg', 'jpeg', 'png'}.contains(ext)) {
-      throw const FormatException('Foto harus berupa JPG/JPEG/PNG.');
+    if (!{'jpg', 'jpeg', 'png', 'webp'}.contains(ext)) {
+      throw const FormatException('Foto harus berupa JPG/JPEG/PNG/WEBP.');
     }
     if (await selected.length() > 5 * 1024 * 1024) {
       throw const FormatException('Ukuran foto maksimal 5 MB.');
     }
 
+    // Di web, kita tidak dapat mengakses filesystem lokal path_provider.
+    // Cukup gunakan selected.path (blob URL) langsung.
+    if (kIsWeb) {
+      return selected.path;
+    }
+
+    // Di Android/iOS/Desktop, simpan ke documents directory
     final root = await getApplicationDocumentsDirectory();
     final folder = Directory('${root.path}/kosfinder_photos');
     await folder.create(recursive: true);

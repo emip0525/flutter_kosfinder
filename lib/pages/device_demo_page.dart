@@ -112,15 +112,25 @@ class _DeviceDemoPageState extends State<DeviceDemoPage> {
 
   // ---------- Permission helpers ----------
   Future<bool> _requestMediaPermission(ImageSource source) async {
-    final permission =
-        source == ImageSource.camera ? Permission.camera : Permission.photos;
-    final status = await permission.request();
-    return status.isGranted;
+    if (kIsWeb) return true;
+    try {
+      final permission =
+          source == ImageSource.camera ? Permission.camera : Permission.photos;
+      final status = await permission.request();
+      return status.isGranted;
+    } catch (_) {
+      return true;
+    }
   }
 
   Future<bool> _requestLocationPermission() async {
-    final status = await Permission.locationWhenInUse.request();
-    return status.isGranted;
+    if (kIsWeb) return true;
+    try {
+      final status = await Permission.locationWhenInUse.request();
+      return status.isGranted;
+    } catch (_) {
+      return true;
+    }
   }
 
   // ---------- Photo Picker ----------
@@ -222,7 +232,8 @@ class _DeviceDemoPageState extends State<DeviceDemoPage> {
 
   @override
   Widget build(BuildContext context) {
-    final photoExists = _photoPath != null && File(_photoPath!).existsSync();
+    final photoExists = _photoPath != null &&
+        (kIsWeb ? _photoPath!.isNotEmpty : File(_photoPath!).existsSync());
     return Scaffold(
       appBar: AppBar(
         title: const Text('KosFinder · Device Demo'),
@@ -273,7 +284,9 @@ class _DeviceDemoPageState extends State<DeviceDemoPage> {
           if (photoExists)
             ClipRRect(
               borderRadius: BorderRadius.circular(12),
-              child: Image.file(File(_photoPath!), height: 200, fit: BoxFit.cover),
+              child: (kIsWeb || _photoPath!.startsWith('http') || _photoPath!.startsWith('blob:') || _photoPath!.startsWith('data:'))
+                  ? Image.network(_photoPath!, height: 200, fit: BoxFit.cover)
+                  : Image.file(File(_photoPath!), height: 200, fit: BoxFit.cover),
             )
           else
             const Text('Belum ada foto. Pilih foto JPG/PNG maksimal 5 MB.'),

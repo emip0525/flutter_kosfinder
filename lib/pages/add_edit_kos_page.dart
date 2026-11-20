@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -119,15 +120,25 @@ class _AddEditKosPageState extends State<AddEditKosPage> {
 
   // ---------- Permission helpers ----------
   Future<bool> _requestMediaPermission(ImageSource source) async {
-    final permission =
-        source == ImageSource.camera ? Permission.camera : Permission.photos;
-    final status = await permission.request();
-    return status.isGranted;
+    if (kIsWeb) return true;
+    try {
+      final permission =
+          source == ImageSource.camera ? Permission.camera : Permission.photos;
+      final status = await permission.request();
+      return status.isGranted;
+    } catch (_) {
+      return true;
+    }
   }
 
   Future<bool> _requestLocationPermission() async {
-    final status = await Permission.locationWhenInUse.request();
-    return status.isGranted;
+    if (kIsWeb) return true;
+    try {
+      final status = await Permission.locationWhenInUse.request();
+      return status.isGranted;
+    } catch (_) {
+      return true;
+    }
   }
 
   // ---------- Foto Picker ----------
@@ -274,6 +285,8 @@ class _AddEditKosPageState extends State<AddEditKosPage> {
 
   Widget _buildPhotoPreview(
       {required String title, required String url, required IconData icon}) {
+    final isNetworkOrBlob =
+        kIsWeb || url.startsWith('http') || url.startsWith('blob:') || url.startsWith('data:');
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -290,7 +303,7 @@ class _AddEditKosPageState extends State<AddEditKosPage> {
               border: Border.all(color: Colors.grey.shade400)),
           clipBehavior: Clip.antiAlias,
           child: url.isNotEmpty
-              ? (url.startsWith('http')
+              ? (isNetworkOrBlob
                   ? Image.network(url,
                       fit: BoxFit.cover,
                       errorBuilder: (c, e, s) => Center(
@@ -650,8 +663,9 @@ class _AddEditKosPageState extends State<AddEditKosPage> {
                     if (v == null || v.trim().isEmpty) return null;
                     final clean =
                         v.trim().replaceAll(RegExp(r'\s|-|\+'), '');
-                    if (!RegExp(r'^[0-9]{10,15}$').hasMatch(clean))
+                    if (!RegExp(r'^[0-9]{10,15}$').hasMatch(clean)) {
                       return 'Format tidak valid. Gunakan: 6281234567890';
+                    }
                     return null;
                   },
                 ),
