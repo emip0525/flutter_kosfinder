@@ -1,5 +1,5 @@
 name: flutter_kosfinder
-description: "KosFinder - Aplikasi Pencarian dan Pengelolaan Kos (Worksheet 9)"
+description: "KosFinder - Aplikasi Pencarian dan Pengelolaan Kos (Worksheet 10)"
 publish_to: 'none'
 
 version: 1.0.0+1
@@ -20,6 +20,7 @@ dependencies:
   geolocator: ^14.1.2
   path_provider: ^2.1.6
   sensors_plus: ^7.1.1
+  permission_handler: ^11.3.1
 
 dev_dependencies:
   flutter_test:

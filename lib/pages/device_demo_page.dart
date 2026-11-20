@@ -4,8 +4,8 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../cloud_config.dart';
@@ -110,7 +110,25 @@ class _DeviceDemoPageState extends State<DeviceDemoPage> {
     await _saveDraft(showMessage: false);
   }
 
+  // ---------- Permission helpers ----------
+  Future<bool> _requestMediaPermission(ImageSource source) async {
+    final permission =
+        source == ImageSource.camera ? Permission.camera : Permission.photos;
+    final status = await permission.request();
+    return status.isGranted;
+  }
+
+  Future<bool> _requestLocationPermission() async {
+    final status = await Permission.locationWhenInUse.request();
+    return status.isGranted;
+  }
+
+  // ---------- Photo Picker ----------
   Future<void> _choosePhoto(ImageSource source) async {
+    if (!await _requestMediaPermission(source)) {
+      _notice('Izin kamera/galeri ditolak.');
+      return;
+    }
     if (_busy) return;
     setState(() => _busy = true);
     try {
@@ -126,7 +144,8 @@ class _DeviceDemoPageState extends State<DeviceDemoPage> {
       await _acceptPhoto(picked);
       _notice('Foto disalin ke penyimpanan permanen aplikasi.');
     } on PlatformException catch (error) {
-      _notice('Kamera/galeri tidak tersedia (${error.code}). Cek izin perangkat.');
+      _notice(
+          'Kamera/galeri tidak tersedia (${error.code}). Cek izin perangkat.');
     } on FormatException catch (error) {
       _notice(error.message);
     } catch (error) {
@@ -136,7 +155,12 @@ class _DeviceDemoPageState extends State<DeviceDemoPage> {
     }
   }
 
+  // ---------- GPS ----------
   Future<void> _getLocation() async {
+    if (!await _requestLocationPermission()) {
+      _notice('Izin lokasi ditolak.');
+      return;
+    }
     if (_busy) return;
     setState(() {
       _busy = true;
@@ -238,7 +262,8 @@ class _DeviceDemoPageState extends State<DeviceDemoPage> {
                 label: const Text('Kamera'),
               ),
               OutlinedButton.icon(
-                onPressed: _busy ? null : () => _choosePhoto(ImageSource.gallery),
+                onPressed:
+                    _busy ? null : () => _choosePhoto(ImageSource.gallery),
                 icon: const Icon(Icons.photo_library),
                 label: const Text('Galeri'),
               ),
@@ -267,13 +292,15 @@ class _DeviceDemoPageState extends State<DeviceDemoPage> {
           ),
           if (_locationError == LocationFailureType.serviceDisabled)
             TextButton(
-              onPressed: () => Geolocator.openLocationSettings(),
-              child: const Text('Buka pengaturan layanan lokasi'),
+              onPressed: () => _notice(
+                  'Buka Pengaturan > Lokasi untuk mengaktifkan GPS.'),
+              child: const Text('Info: Aktifkan layanan lokasi di Pengaturan'),
             ),
           if (_locationError == LocationFailureType.deniedForever)
             TextButton(
-              onPressed: () => Geolocator.openAppSettings(),
-              child: const Text('Buka pengaturan izin aplikasi'),
+              onPressed: () =>
+                  _notice('Buka Pengaturan Aplikasi untuk izin lokasi.'),
+              child: const Text('Info: Izin lokasi ditolak permanen'),
             ),
           const SizedBox(height: 16),
           FilledButton.icon(
@@ -296,7 +323,8 @@ class _DeviceDemoPageState extends State<DeviceDemoPage> {
             label: const Text('Upload Foto ke Supabase (opsional)'),
           ),
           if (!CloudConfig.enabled)
-            const Text('Untuk mengaktifkan upload, lihat bagian Supabase di worksheet.'),
+            const Text(
+                'Untuk mengaktifkan upload, lihat bagian Supabase di worksheet.'),
           if (_busy) const LinearProgressIndicator(),
           if (_storagePath != null) ...[
             const SizedBox(height: 14),
