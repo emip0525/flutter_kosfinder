@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../services/auth_service.dart';
+import 'device_demo_page.dart';
 import 'home_page.dart';
 import 'register_page.dart';
 
@@ -277,6 +278,24 @@ class _LoginPageState extends State<LoginPage> {
                       MaterialPageRoute(builder: (_) => const RegisterPage()),
                     ),
                     child: const Text('Belum punya akun? Register di sini', style: TextStyle(fontWeight: FontWeight.bold)),
+                  ),
+                  const SizedBox(height: 8),
+
+                  // 6. AKSES LANGSUNG WORKSHEET 10
+                  OutlinedButton.icon(
+                    onPressed: () => Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const DeviceDemoPage()),
+                    ),
+                    icon: const Icon(Icons.perm_device_information, color: Colors.teal),
+                    label: const Text(
+                      'Buka Worksheet 10: Device Demo (Kamera & GPS)',
+                      style: TextStyle(fontWeight: FontWeight.bold, color: Colors.teal),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      side: BorderSide(color: Colors.teal.shade400, width: 1.5),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
                   ),
                 ],
               ),

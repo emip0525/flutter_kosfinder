@@ -8,6 +8,7 @@ import '../services/profile_service.dart';
 import '../widgets/role_guard.dart';
 import 'add_edit_kos_page.dart';
 import 'admin_panel_page.dart';
+import 'device_demo_page.dart';
 import 'kos_detail_page.dart';
 import 'login_page.dart';
 import 'search_kos_page.dart';
@@ -191,6 +192,15 @@ class _HomePageState extends State<HomePage> {
             onPressed: _testPushNotification,
           ),
           IconButton(
+            icon: const Icon(Icons.perm_device_information, color: Colors.teal),
+            tooltip: 'Worksheet 10: Device Demo',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const DeviceDemoPage()),
+              );
+            },
+          ),
+          IconButton(
             icon: const Icon(Icons.logout),
             tooltip: 'Logout',
             onPressed: _logout,
@@ -348,6 +358,41 @@ class _HomePageState extends State<HomePage> {
             ),
             const SizedBox(height: 14),
 
+            // Banner Akses Langsung Worksheet 10: Device Demo
+            Card(
+              color: Colors.teal.shade50,
+              elevation: 1,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+                side: BorderSide(color: Colors.teal.shade200),
+              ),
+              child: ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.teal,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.perm_device_information, color: Colors.white, size: 22),
+                ),
+                title: const Text(
+                  'Worksheet 10: Device Demo',
+                  style: TextStyle(fontWeight: FontWeight.bold, color: Colors.teal),
+                ),
+                subtitle: const Text(
+                  'Kamera, Galeri, GPS, Draft Lokal & Sensor Accelerometer',
+                  style: TextStyle(fontSize: 12),
+                ),
+                trailing: const Icon(Icons.arrow_forward_ios, size: 14, color: Colors.teal),
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const DeviceDemoPage()),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 14),
+
             // 3. Tab Filter (Khusus Pemilik Kos / Admin)
             if (isOwnerOrAdmin)
               Padding(
@@ -452,7 +497,7 @@ class _HomePageState extends State<HomePage> {
                                 child: Image.network(
                                   kos.effectiveExteriorImage,
                                   fit: BoxFit.cover,
-                                  errorBuilder: (_, __, ___) => Icon(Icons.apartment_rounded, color: Colors.indigo.shade700, size: 30),
+                                  errorBuilder: (context, error, stackTrace) => Icon(Icons.apartment_rounded, color: Colors.indigo.shade700, size: 30),
                                 ),
                               ),
                               const SizedBox(width: 12),

@@ -236,7 +236,7 @@ class _SearchKosPageState extends State<SearchKosPage> {
                                           child: Image.network(
                                             kos.effectiveExteriorImage,
                                             fit: BoxFit.cover,
-                                            errorBuilder: (_, __, ___) => Icon(Icons.home_work, color: Colors.indigo.shade700),
+                                            errorBuilder: (context, error, stackTrace) => Icon(Icons.home_work, color: Colors.indigo.shade700),
                                           ),
                                         ),
                                         const SizedBox(width: 12),
